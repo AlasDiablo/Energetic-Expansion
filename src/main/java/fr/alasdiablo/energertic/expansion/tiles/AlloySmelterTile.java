@@ -1,6 +1,7 @@
 package fr.alasdiablo.energertic.expansion.tiles;
 
 import net.minecraft.item.ItemStack;
+import net.minecraft.tileentity.FurnaceTileEntity;
 import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityType;
@@ -16,9 +17,7 @@ import javax.annotation.Nullable;
 
 public class AlloySmelterTile extends TileEntity implements ITickableTileEntity {
 
-    private LazyOptional<IItemHandler> fuelHandler = LazyOptional.of(this::createFuelHandler);
-    private LazyOptional<IItemHandler> inputHandler = LazyOptional.of(this::createInputHandler);
-    private LazyOptional<IItemHandler> outputHandler = LazyOptional.of(this::createOutputHandler);
+    private LazyOptional<IItemHandler> handler = LazyOptional.of(this::createHandler);
 
     public AlloySmelterTile(TileEntityType<AlloySmelterTile> tileEntityTypeIn) {
         super(tileEntityTypeIn);
@@ -28,46 +27,19 @@ public class AlloySmelterTile extends TileEntity implements ITickableTileEntity 
     public void tick() {
     }
 
-    private IItemHandler createFuelHandler() {
-        return new ItemStackHandler(1) {
+    private IItemHandler createHandler() {
+        return new ItemStackHandler(5) {
             @Override
             public boolean isItemValid(int slot, @Nonnull ItemStack stack) {
-                return super.isItemValid(slot, stack);
+                return stack.getBurnTime() >= 0;
             }
 
             @Nonnull
             @Override
             public ItemStack insertItem(int slot, @Nonnull ItemStack stack, boolean simulate) {
-                return super.insertItem(slot, stack, simulate);
-            }
-        };
-    }
-
-    private IItemHandler createInputHandler() {
-        return new ItemStackHandler(2) {
-            @Override
-            public boolean isItemValid(int slot, @Nonnull ItemStack stack) {
-                return super.isItemValid(slot, stack);
-            }
-
-            @Nonnull
-            @Override
-            public ItemStack insertItem(int slot, @Nonnull ItemStack stack, boolean simulate) {
-                return super.insertItem(slot, stack, simulate);
-            }
-        };
-    }
-
-    private IItemHandler createOutputHandler() {
-        return new ItemStackHandler(2) {
-            @Override
-            public boolean isItemValid(int slot, @Nonnull ItemStack stack) {
-                return super.isItemValid(slot, stack);
-            }
-
-            @Nonnull
-            @Override
-            public ItemStack insertItem(int slot, @Nonnull ItemStack stack, boolean simulate) {
+                if (stack.getBurnTime() <= 0) {
+                    return stack;
+                }
                 return super.insertItem(slot, stack, simulate);
             }
         };
@@ -79,14 +51,9 @@ public class AlloySmelterTile extends TileEntity implements ITickableTileEntity 
         if (cap == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) {
             assert side != null;
             if (side.getName().equals(Direction.UP.getName())) {
-                return inputHandler.cast();
-            } else if (side.getName().equals(Direction.DOWN.getName())) {
-                return outputHandler.cast();
-            } else {
-                return fuelHandler.cast();
+                return handler.cast();
             }
         }
         return super.getCapability(cap, side);
     }
-
 }
